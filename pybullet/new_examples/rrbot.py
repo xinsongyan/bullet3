@@ -3,9 +3,10 @@ import pybullet_data
 import time
 
 
-
 class RRbotEnv:
-    def __init__(self, urdf_path="/home/xin/codes/bullet3/pybullet/new_examples/model/rrbot.urdf", ini_pos=[0,0,0], ini_quat=[0,0,0,1]):
+    def __init__(self, urdf_path="/home/xin/codes/bullet3/pybullet/new_examples/model/rrbot.urdf",
+                 ini_pos=[0, 0, 0],
+                 ini_quat=[0, 0, 0, 1]):
         # set env
         physicsClient = p.connect(p.GUI)  # or p.DIRECT for non-graphical version
         p.setAdditionalSearchPath(pybullet_data.getDataPath())  # optionally
@@ -52,7 +53,6 @@ class RRbotEnv:
         p.stepSimulation()
         time.sleep(1. / 240.)
         return self._get_obs()
-
 
 
 def main():
@@ -104,7 +104,6 @@ def main():
         time.sleep(1. / 240.)
 
 
-
 if __name__ == "__main__":
     # main()
 
@@ -113,5 +112,3 @@ if __name__ == "__main__":
     while True:
         action = p.calculateInverseDynamics(env.robotId, q, qd, [0] * 2)
         q, qd = env.step(action)
-
-
