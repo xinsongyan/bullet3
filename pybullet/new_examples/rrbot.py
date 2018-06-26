@@ -15,32 +15,37 @@ class RRbotEnv:
 
         # set robot
         self.robotId = p.loadURDF(urdf_path, ini_pos, ini_quat)
-
-        print("-" * 50)
-        print("robotId: ", self.robotId)
-        N = p.getNumJoints(self.robotId)
-        n = N - 1
-        print("NumJoints: ", n)
-
-        for i in range(p.getNumJoints(self.robotId)):
-            print(p.getJointInfo(self.robotId, i))
+        self._print_robot_inf(self.robotId)
 
         self.jointIds = [1, 2]
         p.setJointMotorControlArray(self.robotId, self.jointIds, p.VELOCITY_CONTROL, forces=[0.0, 0.0])
         p.setJointMotorControlArray(self.robotId, self.jointIds, p.TORQUE_CONTROL, forces=[0.0, 0.0])
 
+    def _print_robot_inf(self, robotId):
+        print("-" * 100)
+        print("RobotInfo")
+        print("Number of Joints: ", p.getNumJoints(robotId))
+        print("JointsInfo:")
+        print("jointIndex", "jointName", "jointType", "qIndex", "uIndex", "flags", "jointDamping", "jointFriction",
+              "jointLowerLimit", "jointUpperLimit", "jointMaxForce", "jointMaxVelocity", "linkName", "jointAxis",
+              "parentFramePos", "parentFrameOrn", "parentIndex")
+        for i in range(p.getNumJoints(robotId)):
+            print(p.getJointInfo(robotId, i))
+
     def _get_obs(self):
         # sense robot state
         robotPos, robotOrn = p.getBasePositionAndOrientation(self.robotId)
-        print("robot state: ", robotPos, robotOrn)
+        # print("robot state: ", robotPos, robotOrn)
         joint_states = p.getJointStates(self.robotId, self.jointIds)
         print("joint state: ", joint_states)
 
         q = [joint_state[0] for joint_state in joint_states]
         qd = [joint_state[1] for joint_state in joint_states]
-        print("q: ", q)
-        print("qd: ", qd)
-        return q, qd
+        # print("q: ", q)
+        # print("qd: ", qd)
+
+        state = {'q': q, 'qd': qd}
+        return state
 
     def reset(self):
         return self._get_obs()
@@ -49,7 +54,7 @@ class RRbotEnv:
         pass
 
     def step(self, action):
-        p.setJointMotorControlArray(self.robotId, self.jointIds, p.TORQUE_CONTROL, forces=action)
+        p.setJointMotorControlArray(self.robotId, self.jointIds, p.TORQUE_CONTROL, forces=action['torque'])
         p.stepSimulation()
         time.sleep(1. / 240.)
         return self._get_obs()
@@ -105,10 +110,9 @@ def main():
 
 
 if __name__ == "__main__":
-    # main()
 
     env = RRbotEnv()
-    q, qd = env.reset()
+    state = env.reset()
     while True:
-        action = p.calculateInverseDynamics(env.robotId, q, qd, [0] * 2)
-        q, qd = env.step(action)
+        action = {'torque': p.calculateInverseDynamics(env.robotId, state['q'], state['qd'], [0] * 2)}
+        state = env.step(action)
